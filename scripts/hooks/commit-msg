@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Hook commit-msg : impose « type(portée): message » (Conventional Commits).
+set -euo pipefail
+first_line="$(head -n1 "$1")"
+pattern='^(feat|fix|docs|test|chore|ci|build|refactor|perf)(\([a-z0-9-]+\))?!?: .{3,}'
+if [[ "$first_line" =~ $pattern || "$first_line" =~ ^(Merge|Revert)\  ]]; then
+  exit 0
+fi
+echo "[ERREUR] message de commit refusé : « $first_line »" >&2
+echo "Format attendu : type: message   (types : feat fix docs test chore ci build refactor perf)" >&2
+exit 1
