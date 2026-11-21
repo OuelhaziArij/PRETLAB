@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call: # réutilisé par release.yml : on ne publie jamais une version non testée
+
+# Moindre privilège : la CI ne fait que lire le dépôt
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Style du code (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Contrôles du projet (scripts/check.sh)
+        run: ./scripts/check.sh
+      - name: Tests du script de déploiement (docker simulé)
+        run: ./tests/shell/test_deploy.sh
+      - name: Valider les fichiers Compose
+        run: |
+          cp .env.example .env
+          docker compose config -q
+          printf 'IMAGE_REPO=ghcr.io/demo/pretlab\nIMAGE_TAG=v0.0.0\n' > .env.deploy
+          touch .env.staging
+          docker compose --env-file .env.deploy -f compose.staging.yaml config -q
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # une version qui échoue n'annule pas l'autre
+      matrix:
+        python: ['3.11', '3.12'] # bonus : matrice de versions
+    services:
+      postgres: # vraie base pour les tests d'intégration
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-fictif
+          POSTGRES_DB: ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PRETLAB_TEST_DSN: host=localhost port=5432 dbname=ci user=ci password=ci-fictif
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q --junitxml=report.xml
+      - uses: actions/upload-artifact@v4
+        if: always() # conserver le rapport même si les tests échouent
+        with:
+          name: rapport-tests-py${{ matrix.python }}
+          path: report.xml
+
+  docker-build:
+    needs: [lint, test] # l'image n'est construite que si lint ET tests sont verts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: pretlab:ci
+          build-args: |
+            VERSION=ci
+            REVISION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Test de fumée de l'image
+        run: |
+          docker run -d --name smoke -p 8080:8080 pretlab:ci
+          for i in $(seq 1 15); do curl -fsS http://localhost:8080/health && break; sleep 1; done
+          curl -fsS http://localhost:8080/version
+          test "$(docker exec smoke whoami)" = "app"
+          docker rm -f smoke
