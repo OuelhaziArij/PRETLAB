@@ -1,0 +1,33 @@
+# Staging : on TIRE l'image publiée sur ghcr.io, on ne la reconstruit JAMAIS (aucun "build:").
+# IMAGE_REPO et IMAGE_TAG viennent de .env.deploy (écrit par scripts/deploy.sh),
+# les identifiants de base de .env.staging (non versionné).
+name: pretlab-staging
+
+services:
+  api:
+    image: ${IMAGE_REPO:?IMAGE_REPO manquant}:${IMAGE_TAG:?IMAGE_TAG manquant}
+    ports:
+      - "${STAGING_PORT:-8080}:8080"
+    env_file: [.env.staging]
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    env_file: [.env.staging]
+    volumes:
+      - pgdata-staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata-staging:
