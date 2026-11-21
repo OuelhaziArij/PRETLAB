@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Hook pre-commit : bloque les secrets et signale les erreurs de lint. Installation : make hooks
+set -euo pipefail
+scripts/check.sh --secrets-only
+if command -v ruff >/dev/null 2>&1; then
+  ruff check .
+  ruff format --check .
+fi
