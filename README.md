@@ -30,7 +30,7 @@ curl -X POST -H 'Content-Type: application/json' \
   -d '{"name":"Carte Arduino","tag":"ARD-001"}' http://localhost:8080/equipment
 curl -X POST -H 'Content-Type: application/json' \
   -d '{"equipment_id":1,"borrower":"Amel","days":7}' http://localhost:8080/loans
-curl http://localhost:8080/loans?active=true
+curl 'http://localhost:8080/loans?active=true'
 curl -X POST http://localhost:8080/loans/1/return
 ```
 
