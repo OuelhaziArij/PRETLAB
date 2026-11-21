@@ -1,0 +1,75 @@
+name: Release
+
+# Déclenché UNIQUEMENT par un tag sémantique (vX.Y.Z).
+# L'image est construite UNE SEULE FOIS ici, puis seulement tirée (pull) pour déployer.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    # On ne publie jamais une version dont les contrôles ne sont pas verts.
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # publier sur ghcr.io, rien de plus
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier le format du tag et calculer le nom d'image (minuscules exigées par ghcr.io)
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "tag invalide : $GITHUB_REF_NAME" >&2; exit 1; }
+          echo "IMAGE_REPO=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/pretlab" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            REVISION=${{ github.sha }}
+            SOURCE=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Résumé de la publication
+        run: |
+          {
+            echo "### Image publiée (construite une seule fois)"
+            echo "- Image : \`${IMAGE_REPO}:${GITHUB_REF_NAME}\`"
+            echo "- Empreinte : \`${{ steps.build.outputs.digest }}\`"
+            echo "- Commit : \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Bonus : déploiement automatique sur tag, puis contrôle de santé.
+  # Le « staging » est ici éphémère (runner GitHub) ; votre staging local suit le guide.
+  deploy-staging:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Mise en service avec scripts/deploy.sh (pull, jamais de build)
+        run: |
+          printf 'POSTGRES_DB=pretlab\nPOSTGRES_USER=pretlab\nPOSTGRES_PASSWORD=ci-staging-fictif\n' > .env.staging
+          export IMAGE_REPO="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/pretlab"
+          ./scripts/deploy.sh "$GITHUB_REF_NAME"
