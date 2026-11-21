@@ -1,0 +1,16 @@
+[project]
+name = "pretlab"
+version = "0.0.0"  # la vraie version vient du tag Git (vX.Y.Z)
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["integration: nécessite une vraie base PostgreSQL (PRETLAB_TEST_DSN)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
