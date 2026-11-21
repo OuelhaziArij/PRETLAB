@@ -76,6 +76,14 @@ class MemoryRepo:
             loans = [ln for ln in loans if ln["returned_at"] is None]
         return [_iso(ln) for ln in loans]
 
+    def list_overdue(self):
+        now = datetime.now(UTC)
+        return [
+            _iso(ln)
+            for ln in self._loans.values()
+            if ln["returned_at"] is None and ln["due_at"] < now
+        ]
+
 
 SCHEMA = [
     """CREATE TABLE IF NOT EXISTS equipment (
@@ -183,4 +191,12 @@ class PostgresRepo:
         where = "WHERE returned_at IS NULL" if active_only else ""
         with self._connect() as conn:
             rows = conn.execute(f"SELECT {LOAN_COLS} FROM loans {where} ORDER BY id").fetchall()
+        return [_iso(r) for r in rows]
+
+    def list_overdue(self):
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT {LOAN_COLS} FROM loans "
+                "WHERE returned_at IS NULL AND due_at < now() ORDER BY due_at"
+            ).fetchall()
         return [_iso(r) for r in rows]
