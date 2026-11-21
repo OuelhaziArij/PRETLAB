@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+.deploy-state
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+report.xml
+*.log
