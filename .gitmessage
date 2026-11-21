@@ -1,0 +1,3 @@
+# Convention : type(portée optionnelle): message à l impératif
+# types : feat fix docs test chore ci build refactor perf
+# exemple : feat: refuser le prêt d un objet déjà prêté
