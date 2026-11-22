@@ -15,7 +15,7 @@ Je n'ai pas pu exécuter GitHub Actions depuis l'environnement de création : **
 
 ## À consigner ici une fois produites
 
-- URL verte : `https://github.com/.../actions/runs/...`
-- URL rouge : `https://github.com/.../actions/runs/...`
-- (bonus) URL de l'exécution **Release** de `v1.0.0` ou `v1.1.0` avec `ci`, `publish` et `deploy-staging` verts.
+- URL verte : https://github.com/OuelhaziArij/PRETLAB/actions/runs/45035143406
+- URL rouge : https://github.com/OuelhaziArij/PRETLAB/actions/runs/45036483436
+- (bonus) Release de `v1.0.0` (`ci`, `publish`, `deploy-staging` verts) : https://github.com/OuelhaziArij/PRETLAB/actions/runs/45038846007
 - Garde les PR, branches et exécutions en ligne jusqu'à la soutenance : ne supprime rien.
