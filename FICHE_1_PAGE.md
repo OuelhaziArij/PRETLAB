@@ -1,6 +1,6 @@
 # Fiche d'une page — PrêtLab (projet de fin de module DevOps)
 
-**Étudiant :** _à compléter_ · **Dépôt :** _URL à compléter_ · **Date :** _à compléter_
+**Étudiant :** Ouelhazi Arij · **Dépôt :** https://github.com/OuelhaziArij/PRETLAB · **Date :** 2026-11-22
 
 ## Architecture
 
@@ -33,14 +33,14 @@ Le port 5432 de la base **n'est pas publié** : seule l'API la joint, par le nom
 | Version précédemment déployée | v1.1.0 (ajoute `GET /loans/overdue`) |
 | Image | `ghcr.io/<propriétaire>/pretlab:v1.0.0`, construite **une seule fois** par le workflow Release |
 | Contrôle de santé | `scripts/wait-healthy.sh v1.0.0` → `/ready` répond **et** `/version` affiche `v1.0.0` |
-| Empreinte (digest) de l'image | _à copier du résumé de l'exécution Release_ |
+| Empreinte (digest) de l'image v1.0.0 | `sha256:2a5eb974bb403048902119f355c97599081a4fbf56f17c308082f7df58087ed3` |
 
 ## Déroulé du retour arrière (v1.1.0 → v1.0.0)
 
 1. Constat : v1.1.0 en service (`/version` affiche `v1.1.0`) ; décision de revenir à la version précédente.
 2. `./scripts/deploy.sh --previous` (équivalent : `./scripts/deploy.sh v1.0.0`). Le script lit la version précédente dans `.deploy-state`, écrit `IMAGE_TAG=v1.0.0` dans `.env.deploy`, tire l'image **déjà publiée** (aucun build) et relance `up -d`.
 3. Le script attend `/ready` **et** la version `v1.0.0` (`wait-healthy.sh`), puis affiche `[SUCCES]`.
-4. Preuves : `/version` → `v1.0.0` ; `/loans/overdue` → 404 (route absente de v1.0.0) ; données conservées (volume). Durée mesurée : _à compléter avec le `real` de `time`_.
+4. Preuves : `/version` → `v1.0.0` ; `/loans/overdue` → 404 (route absente de v1.0.0) ; données conservées (volume). Durée mesurée : **10,5 s (real 0m10.506s)**.
 
 ## La chaîne en bref
 
