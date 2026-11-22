@@ -11,7 +11,7 @@ env: ## Créer .env depuis .env.example s'il n'existe pas
 
 up: env ## Construire et démarrer la pile (API + PostgreSQL) en UNE commande
 	docker compose up -d --build --wait
-	@echo "PrêtLab démarré : curl http://localhost:$${API_PORT:-8080}/health"
+	@set -a; . ./.env; set +a; echo "PrêtLab démarré : curl http://localhost:$${API_PORT:-8080}/health"
 
 down: ## Arrêter la pile (les données restent dans le volume)
 	docker compose down
