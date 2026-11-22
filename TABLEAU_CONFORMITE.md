@@ -25,7 +25,7 @@ Statut : ✅ vérifié lors de la création du dépôt · 🖥️ à exécuter s
 | Bonus | Où | Preuve | Statut |
 |---|---|---|---|
 | Déploiement auto sur tag (+2) | Job `deploy-staging` de `release.yml` (appelle `deploy.sh`) | Exécution Release avec `ci`, `publish`, `deploy-staging` verts | 🖥️ |
-| Protection de `main` (+1) | Réglage GitHub (GUIDE étape 13.1) | Capture : fusion bloquée sur la PR rouge | 🖥️ |
+| Protection de `main` (+1) | Ruleset GitHub `protect-main` : PR obligatoire + 4 checks de CI requis, suppression et force push bloqués | Push direct sur `main` refusé (`GH013 Repository rule violations`) ; page https://github.com/OuelhaziArij/PRETLAB/rules?ref=refs%2Fheads%2Fmain | ✅ fait (preuve : terminal) |
 | Matrice de versions (+1) | `ci.yml` (`matrix.python`, `fail-fast: false`) | Jobs `test (3.11)` et `test (3.12)` ; résultats expliqués | ✅ actionlint / 🖥️ |
 | Profil debug Compose (+1) | `adminer` avec `profiles: ["debug"]`, `make debug` | `make up` (pas d'adminer) puis `make debug` | ✅ config / 🖥️ |
 | Image allégée (+1) | GUIDE étape 13.5 | Deux tailles + `docker history` avant/après | 🖥️ |
