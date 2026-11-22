@@ -61,6 +61,10 @@ def create_app(repo=None):
         active = request.args.get("active", "").lower() in ("1", "true", "yes")
         return jsonify(store.list_loans(active_only=active))
 
+    @app.get("/loans/overdue")
+    def overdue():
+        return jsonify(store.list_overdue())
+
     @app.post("/loans")
     def borrow():
         data = request.get_json(silent=True) or {}

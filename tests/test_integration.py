@@ -53,3 +53,9 @@ def test_full_cycle(repo):
     with pytest.raises(Conflict):
         repo.give_back(loan["id"])
     assert repo.list_equipment()[0]["available"] is True
+
+
+def test_overdue_loans(repo):
+    item = repo.add_equipment("Oscilloscope", "OSC-001")
+    repo.borrow(item["id"], "Amel", -1)  # échéance déjà dépassée
+    assert [ln["borrower"] for ln in repo.list_overdue()] == ["Amel"]

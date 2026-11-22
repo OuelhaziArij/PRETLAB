@@ -90,3 +90,17 @@ def test_active_filter(client):
     client.post(f"/loans/{loan['id']}/return")
     assert client.get("/loans?active=true").get_json() == []
     assert len(client.get("/loans").get_json()) == 1
+
+
+def test_overdue_is_empty_for_fresh_loan(client):
+    add_item(client)
+    client.post("/loans", json={"equipment_id": 1, "borrower": "Amel", "days": 3})
+    r = client.get("/loans/overdue")
+    assert r.status_code == 200 and r.get_json() == []
+
+
+def test_overdue_lists_late_loans():
+    repo = MemoryRepo()
+    item = repo.add_equipment("Multimètre", "MUL-001")
+    repo.borrow(item["id"], "Amel", -1)  # échéance déjà dépassée
+    assert len(repo.list_overdue()) == 1
